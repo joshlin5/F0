@@ -49,6 +49,11 @@ exports.handler = async argv => {
         }
     }
 
+    if(!currentJob){
+        console.log(chalk.red(`Job ${job_name} doesn't exist in ${buildFile_path}. Stop process...`));
+        return;
+    }
+
     let steps = currentJob.steps;
     let cleanup_steps = currentJob.cleanup;
 
