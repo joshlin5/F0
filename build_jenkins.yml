@@ -58,17 +58,18 @@ jobs:
       - name: remove jenkins repo
         cmd: rm -rf ~/jenkins
   - name: deploy-jenkins
+    target: jenkins.war
     steps:
       - name: move the project to the remote server
         scp:
           params:
             server: jenkins
-            src: ./iTrust2-10.jar
-            dest: ~/iTrust2-10.jar
+            src: ./jenkins.war
+            dest: ~/jenkins.war
       - name: shutdown the server 
         cmd: sudo killall -q 'java' || true
-      - name: start the iTrust2 server 1
-        cmd: nohup java -jar ~/iTrust2-10.jar --server.port=8080  &> /bakerx/server1.log &
-      - name: start the iTrust2 server 2
-        cmd: nohup java -jar ~/iTrust2-10.jar --server.port=8081  &> /bakerx/server2.log  &
+      - name: start the jenkins on the server jenkins
+        cmd: nohup java -jar ~/jenkins.war &> /bakerx/jenkins.log &
+      - name: copy jenkins password
+        cmd : cp /home/vagrant/.jenkins/secrets/initialAdminPassword /bakerx/initialAdminPassword
     cleanup:

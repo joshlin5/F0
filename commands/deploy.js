@@ -23,6 +23,16 @@ exports.handler = async argv => {
     console.log(chalk.green(`Using the yml file: ${buildFile_path}`));
     console.log(chalk.green(`Using the inventory file: ${inventory_path}`));
     let doc = yaml.load(fs.readFileSync(buildFile_path, 'utf8'));
+
+    // find current job
+    let currentJob = null
+
+    for(let job in doc.jobs){ 
+        if (doc.jobs[job].name === job_name){
+            currentJob = doc.jobs[job]
+        }
+    }
+    let targetFile = currentJob.target;
     let inventory = readInventory(inventory_path);
     let sshCmd = sshConfig(inventory);
     
@@ -38,33 +48,33 @@ exports.handler = async argv => {
     envParams.set("{TOKEN}", process.env["TOKEN"]);
     envParams.set("{VOLUME}", process.env["VOLUME"]);
 
-    // check if the iTrust2-10.jar exists
-    let iTrust2 = path.join(__dirname, '../iTrust2-10.jar');
-    if(!fs.existsSync(iTrust2)){
+    // check if the target file exists
+    let file = path.join(__dirname, `../${targetFile}`);
+    console.log(file)
+    if(!fs.existsSync(file)){
+        let job_name;
+        for(let job in doc.jobs){ 
+            if (doc.jobs[job].name.includes('-build')){
+                job_name = doc.jobs[job].name
+            }
+        }
         let isBuild = await askBuild();
         if(isBuild === 'Y'){
             console.log(chalk.green("Start to build the project"));
             let buildParams = {
-                'job_name': 'itrust-build',
+                'job_name': job_name,
                 'buildFile_path': buildFile_path,
                 'processor': processor
             }
             await build.handler(buildParams);
         }else{
-            console.log(chalk.yellow(`Please run 'node index.js build itrust-build ${buildFile_path}' before the deployment`));
+            console.log(chalk.yellow(`Please run 'node index.js build ${job_name} ${buildFile_path}' before the deployment`));
             return
         }
     }
 
     await runSetup(doc.setup, sshCmd, envParams)
     console.log( chalk.yellowBright( "\nINSTALLATION COMPLETE! TRIGGERING JOB EXECUTION" ))
-    let currentJob = null
-
-    for(let job in doc.jobs){ 
-        if (doc.jobs[job].name === job_name){
-            currentJob = doc.jobs[job]
-        }
-    }
 
     let steps = currentJob.steps;
     let cleanup_steps = currentJob.cleanup;
