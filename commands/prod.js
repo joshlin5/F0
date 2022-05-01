@@ -24,13 +24,13 @@ const servers=[
 		sync: true,
 		image: 'focal',
 		// 0: from , 1: to
-		portForwarding:[8080,8080]
+		portForwarding:[8081,8081]
 	},
 	{
-		name: 'hedgeDoc',
+		name: 'uptime-kuma',
 		sync: true,
 		image: 'focal',
-		portForwarding:[3000,3000]
+		portForwarding:[3001,3001]
 	}
 ]
 

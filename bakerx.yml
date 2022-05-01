@@ -1,4 +1,4 @@
-name: M3
+name: build
 image: focal
 ip: 192.168.56.15
 sync: true

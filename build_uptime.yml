@@ -1,0 +1,69 @@
+setup: 
+  - name: synchronize system time
+    cmd: sudo systemctl restart systemd-timesyncd.service
+  - name: update apt
+    cmd: sudo apt update
+  - name: remove flash-kernel
+    cmd: sudo apt remove -y flash-kernel && sudo apt -y autoremove
+  - name: get dependencies for nodejs
+    cmd: curl -fsSL https://deb.nodesource.com/setup_16.x | sudo bash -
+  - name: install nodejs and npm
+    cmd: sudo apt install -y nodejs -qq
+  - name: install cross-env
+    cmd: sudo npm i cross-env
+  - name: install vite
+    cmd: sudo npm i vite
+  - name: install uuid for pm2
+    cmd: sudo npm install uuid@latest -g
+  - name: install pm2
+    cmd: sudo npm install pm2 -g
+  - name: install yargs for npm
+    cmd: sudo npm install yargs
+  - name: stop apt-daily timer to look for updates
+    cmd: sudo systemctl stop apt-daily.timer
+
+jobs:
+  - name: uptime-build
+    steps:
+      - name: clone latest version of uptime-kuma
+        cmd: git clone https://github.com/louislam/uptime-kuma.git
+      - name: install uptime-kuma
+        cmd: cd uptime-kuma && npm install
+      - name: build prodiction for uptime-kuma
+        cmd: cd uptime-kuma && npm run build
+      - name: package uptime-kuma
+        cmd: tar -czvf uptime-kuma.tar.gz -C uptime-kuma .
+      - name: move package
+        cmd: cp uptime-kuma.tar.gz /bakerx/uptime-kuma.tar.gz
+    cleanup:
+      - name: remove uptime-kuma repo
+        cmd: rm -rf ~/uptime-kuma
+  - name: uptime-test
+    steps:
+      - name: clone latest version of StoreDown
+        cmd: git clone https://github.com/louislam/uptime-kuma.git
+      - name: install uptime-kuma 
+        cmd: cd uptime-kuma && npm install && npm run build
+      - name: run test
+        cmd: cd uptime-kuma  && npm test
+    cleanup:
+      - name: remove StoreDown repo
+        cmd: rm -rf ~/uptime-kuma
+  - name: deploy-uptime
+    target: uptime-kuma.tar.gz
+    steps:
+      - name: move the project to the remote server
+        scp:
+          params:
+            server: jenkins
+            src: ./uptime-kuma.tar.gz
+            dest: ~/uptime-kuma.tar.gz
+      - name: unzip
+        cmd: rm -rf uptime-kuma && mkdir uptime-kuma && tar -xvzf uptime-kuma.tar.gz -C uptime-kuma
+      - name: shutdown the server 
+        cmd: pm2 kill
+      - name: setup
+        cmd: cd uptime-kuma && npm run setup
+      - name: start the uptime on the server uptime-kuma
+        cmd: cd uptime-kuma && pm2 start server/server.js --name uptime-kuma
+    cleanup:

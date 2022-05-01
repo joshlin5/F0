@@ -21,18 +21,18 @@ setup:
 jobs:
   - name: jenkins-build
     steps:
-      - name: clone latest version of iTrust2
+      - name: clone latest version of jenkins
         cmd: git clone https://github.com/jenkinsci/jenkins.git
       - name: package jenkins
         cmd: "cd jenkins && /opt/maven/bin/mvn -am -pl war,bom -DskipTests -Dspotbugs.skip -Dspotless.check.skip clean install"
-      - name: move iTrust2 jar file
+      - name: move jenkins war file
         cmd: cp jenkins/war/target/jenkins.war /bakerx/jenkins.war
     cleanup:
       - name: remove jenkins repo
         cmd: rm -rf ~/jenkins
   - name: jenkins-unit-test
     steps:
-      - name: clone latest version of iTrust2
+      - name: clone latest version of jenkins
         cmd: git clone https://github.com/jenkinsci/jenkins.git
       - name: package jenkins
         cmd: "cd jenkins && /opt/maven/bin/mvn clean install -P light-test"
@@ -41,7 +41,7 @@ jobs:
         cmd: rm -rf ~/jenkins
   - name: jenkins-smoke-test
     steps:
-      - name: clone latest version of iTrust2
+      - name: clone latest version of jenkins
         cmd: git clone https://github.com/jenkinsci/jenkins.git
       - name: package jenkins
         cmd: "cd jenkins && /opt/maven/bin/mvn clean install -P smoke-test"
@@ -50,7 +50,7 @@ jobs:
         cmd: rm -rf ~/jenkins
   - name: jenkins-all-test
     steps:
-      - name: clone latest version of iTrust2
+      - name: clone latest version of jenkins
         cmd: git clone https://github.com/jenkinsci/jenkins.git
       - name: package jenkins
         cmd: "cd jenkins && /opt/maven/bin/mvn clean install -P all-test"
@@ -69,7 +69,7 @@ jobs:
       - name: shutdown the server 
         cmd: sudo killall -q 'java' || true
       - name: start the jenkins on the server jenkins
-        cmd: nohup java -jar ~/jenkins.war &> /bakerx/jenkins.log &
+        cmd: nohup java -jar ~/jenkins.war --httpPort=8081 &> /bakerx/jenkins.log &
       - name: copy jenkins password
         cmd : cp /home/vagrant/.jenkins/secrets/initialAdminPassword /bakerx/initialAdminPassword
     cleanup:

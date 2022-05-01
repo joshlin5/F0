@@ -11,3 +11,4 @@ config.txt
 jenkins.war
 *inventory
 initialAdminPassword
+*.tar.gz
